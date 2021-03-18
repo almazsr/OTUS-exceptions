@@ -20,7 +20,7 @@ namespace ToDoText
         static ToDoTask[] GetTasks()
         {
             var todoTxtLines = File.ReadAllLines(_fileName);
-            return todoTxtLines.Select(l =>
+            return todoTxtLines.Map(l =>
             {
                 var split = l.Split('\t');
                 var date = DateTime.ParseExact(split[0], "dd/MM/yy", CultureInfo.InvariantCulture);
