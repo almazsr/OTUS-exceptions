@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 
 namespace ToDoText
 {
@@ -11,21 +12,70 @@ namespace ToDoText
     {
         const string _fileName = "todo.txt";
 
+        static void CheckIfFileExists(string path)
+        {
+           if(!File.Exists(path))
+           {
+              throw new FileNotFoundException($"File {Assembly.GetExecutingAssembly().CodeBase}\\{path} does not exist.");
+           }
+        }
+        static void CheckInputParameters(string[] parameters)
+        {
+            if (parameters.Length == 1)
+            {
+               CheckAction(parameters[0]);
+            }
+            else if (parameters.Length == 3)
+            {
+               CheckAction(parameters[0]);
+               CheckDateParameter(parameters[2]);
+            }
+            else
+            {
+               throw new ArgumentException("Invalid parameter count, only one or three are allowed");
+            }
+        }
+
+        static void CheckAction(string parameter)
+        {
+           if (parameter != "add" || parameter != "today" || parameter != "all")
+           {
+              throw new ArgumentException("Invalid parameter only \"add\", \"today\" or \"all\" are allowed");
+           }
+        }
+
+        private static void CheckDateParameter(string date)
+        {
+            DateTime now = DateTime.Now;
+            if (!DateTime.TryParseExact(date, "dd/MM/yy", CultureInfo.InvariantCulture, DateTimeStyles.None, out now))
+            {
+               throw new ArgumentException("Invalid DateTime format");
+            }
+        }
+
         static void AddTask(string name, DateTime date)
         {
             var task = new ToDoTask { Name = name, Date = date };
             File.AppendAllLines(_fileName, new[] { $"{task.Date:dd/MM/yy}\t{task.Name}" });
-        }
+         }
 
         static ToDoTask[] GetTasks()
         {
             var todoTxtLines = File.ReadAllLines(_fileName);
             return todoTxtLines.Select(l =>
             {
-                var split = l.Split('\t');
-                var date = DateTime.ParseExact(split[0], "dd/MM/yy", CultureInfo.InvariantCulture);
-                var name = split[1];
-                return new ToDoTask { Name = name, Date = date };
+               try
+               {
+                  var split = l.Split('\t');
+                  var date = DateTime.ParseExact(split[0], "dd/MM/yy", CultureInfo.InvariantCulture);
+                  var name = split[1];
+                  return new ToDoTask { Name = name, Date = date };
+               }
+               catch(IndexOutOfRangeException ex)
+               {
+                  Console.WriteLine(ex.ToString());
+                  return ToDoTask.ErrorTask;
+               }
             }).ToArray();
         }
 
@@ -61,6 +111,8 @@ namespace ToDoText
 
         static void Main(string[] args)
         {
+            CheckIfFileExists(_fileName);
+            CheckInputParameters(args);
             switch (args[0])
             {
                 case "add":
@@ -73,6 +125,8 @@ namespace ToDoText
                     break;
                 case "all":
                     ListAllTasks();
+                    break;
+                  default:
                     break;
             }
         }
