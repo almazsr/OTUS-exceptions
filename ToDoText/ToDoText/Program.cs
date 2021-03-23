@@ -14,19 +14,38 @@ namespace ToDoText
         static void AddTask(string name, DateTime date)
         {
             var task = new ToDoTask { Name = name, Date = date };
-            File.AppendAllLines(_fileName, new[] { $"{task.Date:dd/MM/yy}\t{task.Name}" });
+            try
+            {
+	            File.AppendAllLines(_fileName, new[] {$"{task.Date:dd/MM/yy}\t{task.Name}"});
+            }
+            catch (FileNotFoundException)
+            {
+	            Console.WriteLine($"File {_fileName} not found");
+	            throw;
+            }
         }
 
         static ToDoTask[] GetTasks()
         {
-            var todoTxtLines = File.ReadAllLines(_fileName);
-            return todoTxtLines.Select(l =>
-            {
-                var split = l.Split('\t');
-                var date = DateTime.ParseExact(split[0], "dd/MM/yy", CultureInfo.InvariantCulture);
-                var name = split[1];
-                return new ToDoTask { Name = name, Date = date };
-            }).ToArray();
+	        try
+	        {
+				var todoTxtLines = File.ReadAllLines(_fileName);
+				return todoTxtLines.Select(l =>
+				{
+					var split = l.Split('\t');
+					if (split.Length < 2
+					    || DateTime.TryParseExact(split[0], "dd/MM/yy", CultureInfo.InvariantCulture,
+						    DateTimeStyles.None, out var date))
+						throw new Exception($"Wrong format in {_fileName}");
+					var name = split[1];
+					return new ToDoTask { Name = name, Date = date };
+				}).ToArray();
+			}
+			catch (FileNotFoundException)
+			{
+				Console.WriteLine($"File {_fileName} not found");
+				throw;
+			}
         }
 
         static void ListTodayTasks()
@@ -38,6 +57,7 @@ namespace ToDoText
         static void ListAllTasks()
         {
             var tasks = GetTasks();
+            if (tasks.Length == 0) return;
             var minDate = tasks.Min(t => t.Date);
             var maxDate = tasks.Max(t => t.Date);
             ShowTasks(tasks, minDate, maxDate);
@@ -61,12 +81,20 @@ namespace ToDoText
 
         static void Main(string[] args)
         {
+	        if (args.Length == 0)
+	        {
+				Console.WriteLine("Use command line arguments");
+				return;
+	        }
+
             switch (args[0])
             {
                 case "add":
                     var name = args[1];
-                    var date = DateTime.ParseExact(args[2], "dd/MM/yy", CultureInfo.InvariantCulture);
-                    AddTask(name, date);
+					if (DateTime.TryParseExact(args[2], "dd/MM/yy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+						AddTask(name, date);
+					else
+						Console.WriteLine("Use dd/MM/yy date format");
                     break;
                 case "today":
                     ListTodayTasks();
