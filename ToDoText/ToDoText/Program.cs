@@ -4,13 +4,14 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace ToDoText
 {
     class Program
     {
         const string _fileName = "todo.txt";
-        private static string warning;
+        private static StringBuilder warning;
 
         static void AddTask(string name, DateTime date)
         {
@@ -20,41 +21,40 @@ namespace ToDoText
 
         static List<ToDoTask> GetTasks()
         {
+            warning = new StringBuilder();
             var taskList = new List<ToDoTask>();
             var todoTxtLines = File.ReadAllLines(_fileName);
             foreach (var line in todoTxtLines)
             {
-                if (ValidateTaskString(line))
+                try
+                {
                     taskList.Add(MakeTaskFromString(line));
-                else
-                    warning += "Некорректная строка: " + line + Environment.NewLine;
+                }
+                catch (ArgumentException ex)
+                {
+                    warning.Append($"Некорректная строка: {line} {ex.Message}{Environment.NewLine}");
+                }
             }
             return taskList;
         }
 
         static ToDoTask MakeTaskFromString(string str)
         {
-            var split = str.Split('\t');
-            var date = DateTime.Parse(split[0]);
-            var name = split[1];
-            return new ToDoTask { Name = name, Date = date };
-        }
-
-        static bool ValidateTaskString(string str)
-        {
             if (!str.Contains('\t'))
-                return false;
+                throw new ArgumentException("Строка не содержит разделитель");
             var split = str.Split('\t');
             if (split.Length != 2)
-                return false;
+                throw new ArgumentException("Строка не может быть корректно разделена на 2");
             if (DateTime.TryParse(split[0], out var date))
             {
-                return true;
+                var name = split[1];
+                return new ToDoTask { Name = name, Date = date };
             }
             else
             {
-                return false;
+                throw new ArgumentException("Не удалось получить дату из строки");
             }
+
         }
 
         static void ListTodayTasks()
