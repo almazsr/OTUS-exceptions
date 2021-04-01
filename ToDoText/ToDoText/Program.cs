@@ -61,19 +61,42 @@ namespace ToDoText
 
         static void Main(string[] args)
         {
-            switch (args[0])
+            try
             {
-                case "add":
-                    var name = args[1];
-                    var date = DateTime.ParseExact(args[2], "dd/MM/yy", CultureInfo.InvariantCulture);
-                    AddTask(name, date);
-                    break;
-                case "today":
-                    ListTodayTasks();
-                    break;
-                case "all":
-                    ListAllTasks();
-                    break;
+                switch (args[0])
+                {
+                    case "add":
+                        var name = args[1];
+                        var date = DateTime.ParseExact(args[2], "dd/MM/yy", CultureInfo.InvariantCulture);
+                        AddTask(name, date);
+                        break;
+                    case "today":
+                        ListTodayTasks();
+                        break;
+                    case "all":
+                        ListAllTasks();
+                        break;
+                }
+            }
+            catch (IndexOutOfRangeException)
+            {
+                Console.WriteLine("Указано неверное количество параметров. Варианты запуска приложения:");
+                Console.WriteLine("\tToDoText add <name> <date>");
+                Console.WriteLine("\tToDoText today");
+                Console.WriteLine("\tToDoText all");
+            }
+            catch (FormatException)
+            {
+                Console.WriteLine("Дата указана в неверном формате. Ожидается формат dd/MM/yy.");
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine($"Файл \"{_fileName}\" не найден");
+            }
+            finally
+            {
+                Console.WriteLine("Для завершения работы приложения нажмите любую клавишу");
+                Console.ReadKey();
             }
         }
     }
