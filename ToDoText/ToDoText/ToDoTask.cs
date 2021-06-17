@@ -11,6 +11,10 @@ namespace ToDoText
 
         public ToDoTask(string name, DateTime date)
         {
+            if (name == null|| name.Length==0)
+                throw new NotImplementedException("Недопустимо пустое имя задачи!");
+            if (date < MinDate || date > MaxDate)
+                throw new NotImplementedException($"Дата должна быть между {MinDate} и {MaxDate}");
             Name = name;
             Date = date;
         }
@@ -25,7 +29,18 @@ namespace ToDoText
 
         public static bool TryParse(string input, out ToDoTask toDoTask)
         {
-            throw new NotImplementedException();
+            try
+            {
+                toDoTask= Parse(input);
+                return true;
+            }
+            catch (Exception e) 
+            {
+                Console.WriteLine($"Ошибка при разборе файла задач{e.ToString()}");
+                toDoTask = null;
+                return false;
+
+            }
         }
 
         public DateTime Date { get; }
